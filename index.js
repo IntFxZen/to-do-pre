@@ -18,7 +18,20 @@ const taskTemplate = document
 
 function getSavedTasks() {
   const rawTasks = localStorage.getItem(STORAGE_KEY);
-  return rawTasks !== null ? JSON.parse(rawTasks) : [...initialTasks];
+  if (rawTasks === null) {
+    return [...initialTasks];
+  }
+
+  try {
+    const tasks = JSON.parse(rawTasks);
+    if (!Array.isArray(tasks) || !tasks.every((task) => typeof task === "string")) {
+      throw new TypeError("Saved tasks must be an array of strings.");
+    }
+    return tasks;
+  } catch (error) {
+    console.error("Could not load saved tasks from localStorage.", error);
+    return [...initialTasks];
+  }
 }
 
 function collectTasksFromDOM() {
@@ -26,8 +39,8 @@ function collectTasksFromDOM() {
   return Array.from(textNodes, (node) => node.textContent);
 }
 
-function updateStorage(taskList) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(taskList));
+function updateStorage(tasks) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
 function syncTasksWithStorage() {
@@ -35,7 +48,7 @@ function syncTasksWithStorage() {
   updateStorage(currentTasks);
 }
 
-function buildTaskElement(taskText) {
+function createItem(taskText) {
   const taskNode = taskTemplate.cloneNode(true);
 
   const textNode = taskNode.querySelector(".to-do__item-text");
@@ -51,7 +64,7 @@ function buildTaskElement(taskText) {
   });
 
   copyBtn.addEventListener("click", () => {
-    const copiedNode = buildTaskElement(textNode.textContent);
+    const copiedNode = createItem(textNode.textContent);
     todoList.prepend(copiedNode);
     syncTasksWithStorage();
   });
@@ -77,7 +90,7 @@ function handleFormSubmit(evt) {
     return;
   }
 
-  const taskNode = buildTaskElement(taskText);
+  const taskNode = createItem(taskText);
   todoList.prepend(taskNode);
   todoForm.reset();
 
@@ -88,5 +101,5 @@ todoForm.addEventListener("submit", handleFormSubmit);
 
 const loadedTasks = getSavedTasks();
 for (const taskText of loadedTasks) {
-  todoList.append(buildTaskElement(taskText));
+  todoList.append(createItem(taskText));
 }

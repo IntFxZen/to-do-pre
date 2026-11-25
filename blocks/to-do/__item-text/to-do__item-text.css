@@ -1,5 +1,7 @@
 .to-do__item-text {
+  min-width: 0;
   flex-grow: 1;
+  overflow-wrap: anywhere;
   font-weight: 900;
   font-size: 24px;
   line-height: 29px;
